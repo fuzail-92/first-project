@@ -1,0 +1,18 @@
+{
+  "name": "first-project",
+  "version": "1.0.0",
+  "description": "A lightweight project exploring YouTube APIs and tools to interact with video content, data, and automation",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
