@@ -5,7 +5,15 @@ import connectDB from "./db/index.js";
 dotenv.config({
   path: "./env",
 });
-connectDB();
+connectDB()
+  .then(() => {
+    app.listen(process.env.PORT || 8080, () => {
+      console.log(` Server is running at port : ${process.env.PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.log("MONGO db connection Fail !!!", err);
+  });
 
 /*import mongoose from "mongoose";
 import { DB_Name } from "./constants";
