@@ -1,9 +1,9 @@
 // ye chke kre ga k middleware hai k nahi
 
-import { ApiError } from "../utils/ApiError";
-import { asyncHandler } from "../utils/asyncHandler";
+import { ApiError } from "../utils/ApiError.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
-import { User } from "../models/user.model";
+import { User } from "../models/user.model.js";
 
 // ye middleware JWT token verify kare ga
 export const verifyJWT = asyncHandler(async (req, res, next) => {
