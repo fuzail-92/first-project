@@ -343,6 +343,104 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, user, "Cover image updated successfully"));
 });
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+  const { username } = req.params;
+
+  // 🔍 Validate that username is provided and not empty
+  if (!username?.trim()) {
+    throw new ApiError(400, "username is missing");
+  }
+
+  // 📊 Aggregation pipeline to fetch user channel profile
+  const channel = await User.aggregate([
+    // Step 1: Match the user by username (case-insensitive)
+    {
+      $match: {
+        username: username.toLowerCase(),
+      },
+    },
+
+    // Step 2: Lookup subscribers - users who subscribed to this user
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers",
+      },
+    },
+
+    // Step 3: Lookup channels this user has subscribed to
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "subscriber",
+        as: "subscribedTo",
+      },
+    },
+
+    // Step 4: Add calculated fields
+    {
+      $addFields: {
+        // Total number of subscribers
+        subscribersCount: {
+          $size: "$subscribers",
+        },
+
+        // Total number of channels this user has subscribed to
+        channelsSubscribedToCount: {
+          $size: "$subscribedTo",
+        },
+
+        // Check if the current logged-in user is subscribed to this channel
+        isSubscribed: {
+          $cond: {
+            if: {
+              $in: [
+                req.user?._id, // Current logged-in user's ID
+                {
+                  // Extract all subscriber IDs from subscribers array
+                  $map: {
+                    input: "$subscribers",
+                    as: "s",
+                    in: "$$s.subscriber",
+                  },
+                },
+              ],
+            },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+
+    // Step 5: Project only required fields in the final output
+    {
+      $project: {
+        fullName: 1,
+        username: 1,
+        subscribersCount: 1,
+        channelsSubscribedToCount: 1,
+        isSubscribed: 1,
+        avatar: 1,
+        coverImage: 1,
+        email: 1,
+      },
+    },
+  ]);
+
+  // ❌ If no user/channel found with given username
+  if (!channel?.length) {
+    throw new ApiError(404, "Channel does not exists");
+  }
+
+  // ✅ Return the channel data in a consistent API response format
+  return res
+    .status(200)
+    .json(new ApiResponse(200, channel[0], "User channel fetched successfuly"));
+});
 
 export {
   registerUser,
@@ -354,4 +452,5 @@ export {
   updateAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
+  getUserChannelProfile,
 };
